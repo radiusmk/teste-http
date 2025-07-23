@@ -4,7 +4,7 @@ Script em Python para realizar múltiplas requisições HTTP a uma URL, contabil
 
 ## Objetivo
 
-Este projeto permite testar endpoints HTTP realizando várias requisições simultâneas, contabilizando os retornos HTTP (status code) e exibindo um resumo ao final, incluindo tempo total do teste, URL testada e número de threads utilizadas.
+Este projeto permite testar endpoints HTTP realizando várias requisições simultâneas, contabilizando os retornos HTTP (status code) e exibindo um resumo ao final, incluindo tempo total do teste, URL testada, número de threads utilizadas, tempo médio de resposta e outras informações úteis.
 
 ## Instalação
 
@@ -17,10 +17,10 @@ pip install -r requirements.txt
 
 ## Uso
 
-Execute o script passando a URL, a quantidade de requisições e, opcionalmente, o intervalo entre as requisições e o número de threads:
+Execute o script passando a URL, a quantidade de requisições e, opcionalmente, o intervalo entre as requisições, o número de threads, o reaproveitamento de conexões e a versão do IP:
 
 ```bash
-python http_status_counter.py <URL> <QUANTIDADE> [--intervalo SEGUNDOS] [-t THREADS]
+python http_status_counter.py <URL> <QUANTIDADE> [--intervalo SEGUNDOS] [-t THREADS] [--keep-alive] [--ipver 4|6|auto]
 ```
 
 ### Parâmetros
@@ -29,6 +29,8 @@ python http_status_counter.py <URL> <QUANTIDADE> [--intervalo SEGUNDOS] [-t THRE
 - `<QUANTIDADE>`: Número total de requisições a serem realizadas (obrigatório)
 - `--intervalo`: Intervalo (em segundos) entre as requisições (opcional, padrão: 0)
 - `-t`, `--threads`: Número de threads simultâneas (opcional, padrão: 1)
+- `--keep-alive`: Reaproveita conexões HTTP usando keep-alive (opcional)
+- `--ipver`: Versão do IP a ser utilizada: `4` (IPv4), `6` (IPv6) ou `auto` (padrão, deixa o sistema escolher)
 
 ### Exemplos
 
@@ -37,9 +39,14 @@ Requisições sequenciais:
 python http_status_counter.py https://httpbin.org/status/200 10
 ```
 
-Requisições simultâneas com 5 threads:
+Requisições simultâneas com 5 threads e keep-alive:
 ```bash
-python http_status_counter.py https://httpbin.org/status/200 50 -t 5
+python http_status_counter.py https://httpbin.org/status/200 50 -t 5 --keep-alive
+```
+
+Requisições forçando IPv6:
+```bash
+python http_status_counter.py https://httpbin.org/status/200 10 --ipver 6
 ```
 
 Requisições com intervalo de 2 segundos entre cada:
@@ -49,10 +56,18 @@ python http_status_counter.py https://httpbin.org/status/200 10 --intervalo 2
 
 ## Saída
 
+Durante a execução, para cada requisição, será exibido:
+- Número da requisição
+- Código de status HTTP
+- Tempo de resposta (em segundos)
+
 Ao final do teste, será exibido um resumo contendo:
 - URL testada
 - Número de threads utilizadas
+- Keep-alive ativado ou não
+- Versão IP utilizada
 - Tempo total do teste (hh:mm:ss)
+- Tempo médio de resposta (em segundos)
 - Tabela com a contagem de cada código de status HTTP recebido
 
 ---
