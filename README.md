@@ -27,7 +27,7 @@ python http_status_counter.py <URL> <QUANTIDADE> [--intervalo SEGUNDOS] [-t THRE
 
 - `<URL>`: Endereço HTTP/HTTPS a ser testado (obrigatório)
 - `<QUANTIDADE>`: Número total de requisições a serem realizadas (obrigatório)
-- `--intervalo`: Intervalo (em segundos) entre as requisições (opcional, padrão: 0)
+- `-i`: Intervalo (em segundos) entre as requisições (opcional, padrão: 0)
 - `-t`, `--threads`: Número de threads simultâneas (opcional, padrão: 1)
 
 ### Exemplos
@@ -44,7 +44,7 @@ python http_status_counter.py https://httpbin.org/status/200 50 -t 5
 
 Requisições com intervalo de 2 segundos entre cada:
 ```bash
-python http_status_counter.py https://httpbin.org/status/200 10 --intervalo 2
+python http_status_counter.py https://httpbin.org/status/200 10 -i 2
 ```
 
 ## Saída

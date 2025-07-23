@@ -52,7 +52,7 @@ def main():
     parser = argparse.ArgumentParser(description='Conta códigos de status HTTP de múltiplas requisições.')
     parser.add_argument('url', type=str, help='URL a ser acessada')
     parser.add_argument('quantidade', type=int, help='Quantidade de requisições a serem realizadas')
-    parser.add_argument('--intervalo', type=float, default=0, help='Tempo (em segundos) entre as requisições (opcional)')
+    parser.add_argument('-i', '--intervalo', type=float, default=0, help='Tempo (em segundos) entre as requisições (opcional)')
     parser.add_argument('-t', '--threads', type=int, default=1, help='Quantidade de threads simultâneas (opcional, padrão=1)')
     parser.add_argument('--keep-alive', action='store_true', help='Reaproveitar conexões HTTP (keep-alive) usando requests.Session')
     parser.add_argument('--ipver', choices=['4', '6', 'auto'], default='auto', help='Versão IP a ser usada: 4 (IPv4), 6 (IPv6) ou auto (padrão)')
