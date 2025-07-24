@@ -73,6 +73,7 @@ def main():
     print(f'Versão IP: {ipver_str}')
 
     inicio = time.time()
+    data_hora_inicio = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     tempos_resposta = []
 
@@ -85,38 +86,46 @@ def main():
                 session.mount('http://', IPAdapter(ipver=ipver_num))
                 session.mount('https://', IPAdapter(ipver=ipver_num))
             thread_sessions.append(session)
-        def thread_worker(idx):
+        # Divide as requisições entre as threads
+        reqs_por_thread = [total // n_threads] * n_threads
+        for i in range(total % n_threads):
+            reqs_por_thread[i] += 1
+
+        def thread_worker(idx, n_reqs):
             session = thread_sessions[idx % n_threads]
-            if intervalo > 0 and idx > 0:
-                time.sleep(intervalo * idx)
-            return fazer_requisicao(url, session=session)
-        with ThreadPoolExecutor(max_workers=n_threads) as executor:
-            futures = [executor.submit(thread_worker, i) for i in range(total)]
-            for i, future in enumerate(as_completed(futures)):
-                status, tempo = future.result()
+            for j in range(n_reqs):
+                status, tempo = fazer_requisicao(url, session=session)
                 status_counter[status] += 1
                 if tempo is not None:
                     tempos_resposta.append(tempo)
-                    print(f'Requisição {i+1}/{total}: Status {status} | Tempo de resposta: {tempo:.3f} s')
+                    print(f'Thread {idx+1}: Requisição {j+1}: Status {status} | Tempo de resposta: {tempo:.3f} s')
                 else:
-                    print(f'Requisição {i+1}/{total}: Status {status} | Tempo de resposta: erro')
+                    print(f'Thread {idx+1}: Requisição {j+1}: Status {status} | Tempo de resposta: erro')
+                if intervalo > 0 and j < n_reqs - 1:
+                    time.sleep(intervalo)
+        with ThreadPoolExecutor(max_workers=n_threads) as executor:
+            futures = [executor.submit(thread_worker, i, reqs_por_thread[i]) for i in range(n_threads)]
+            for future in as_completed(futures):
+                pass  # O print já é feito dentro do worker
         for session in thread_sessions:
             session.close()
     else:
         def worker(idx):
-            if intervalo > 0 and idx > 0:
-                time.sleep(intervalo * idx)
             if ipver != 'auto':
                 session = requests.Session()
                 session.mount('http://', IPAdapter(ipver=ipver_num))
                 session.mount('https://', IPAdapter(ipver=ipver_num))
                 result = fazer_requisicao(url, session=session)
                 session.close()
-                return result
             else:
-                return fazer_requisicao(url)
+                result = fazer_requisicao(url)
+            return result
         with ThreadPoolExecutor(max_workers=n_threads) as executor:
-            futures = [executor.submit(worker, i) for i in range(total)]
+            futures = []
+            for i in range(total):
+                if intervalo > 0 and i > 0:
+                    time.sleep(intervalo)
+                futures.append(executor.submit(worker, i))
             for i, future in enumerate(as_completed(futures)):
                 status, tempo = future.result()
                 status_counter[status] += 1
@@ -127,6 +136,7 @@ def main():
                     print(f'Requisição {i+1}/{total}: Status {status} | Tempo de resposta: erro')
 
     fim = time.time()
+    data_hora_fim = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     tempo_total = fim - inicio
     tempo_formatado = str(datetime.timedelta(seconds=int(tempo_total)))
 
@@ -137,6 +147,8 @@ def main():
     print(f'Threads utilizadas: {n_threads}')
     print(f'Keep-alive ativado: {"Sim" if keep_alive else "Não"}')
     print(f'Versão IP: {ipver_str}')
+    print(f'Data/hora início: {data_hora_inicio}')
+    print(f'Data/hora fim: {data_hora_fim}')
     print(f'Tempo total do teste: {tempo_formatado}')
     print(f'Tempo médio de resposta: {tempo_medio:.3f} s')
     tabela = [[str(status), count] for status, count in status_counter.items()]
