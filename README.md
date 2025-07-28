@@ -26,11 +26,26 @@ python http_status_counter.py <URL> <QUANTIDADE> [--intervalo SEGUNDOS] [-t THRE
 ### Parâmetros
 
 - `<URL>`: Endereço HTTP/HTTPS a ser testado (obrigatório)
+  - Suporta a tag `<count>` que será substituída pelo número da requisição
 - `<QUANTIDADE>`: Número total de requisições a serem realizadas (obrigatório)
-- `-i`: Intervalo (em segundos) entre as requisições (opcional, padrão: 0)
+- `-i`, `--intervalo`: Intervalo (em segundos) entre as requisições (opcional, padrão: 0)
 - `-t`, `--threads`: Número de threads simultâneas (opcional, padrão: 1)
 - `--keep-alive`: Reaproveita conexões HTTP usando keep-alive (opcional)
 - `--ipver`: Versão do IP a ser utilizada: `4` (IPv4), `6` (IPv6) ou `auto` (padrão, deixa o sistema escolher)
+
+### Funcionalidades Especiais
+
+#### Tag `<count>` na URL
+Você pode usar a tag `<count>` na URL para gerar URLs únicas para cada requisição. O `<count>` será substituído pelo número da requisição (começando em 1).
+
+**Exemplos:**
+```bash
+# Cada requisição acessará uma URL diferente
+python http_status_counter.py "https://api.exemplo.com/user/<count>" 10
+
+# Com parâmetros na URL
+python http_status_counter.py "https://api.exemplo.com/test?id=<count>&type=load" 50
+```
 
 ### Exemplos
 
@@ -54,21 +69,47 @@ Requisições com intervalo de 2 segundos entre cada:
 python http_status_counter.py https://httpbin.org/status/200 10 -i 2
 ```
 
+Requisições com URLs únicas usando `<count>`:
+```bash
+python http_status_counter.py "https://httpbin.org/status/<count>" 10
+```
+
 ## Saída
 
 Durante a execução, para cada requisição, será exibido:
 - Número da requisição
 - Código de status HTTP
 - Tempo de resposta (em segundos)
+- URL utilizada (especialmente útil quando usando a tag `<count>`)
+
+**Exemplo de saída:**
+```
+Iniciando 10 requisições para https://httpbin.org/status/<count> usando 1 thread(s)...
+Keep-alive ativado: Não
+Versão IP: Auto
+Requisição 1/10: Status 200 | Tempo de resposta: 0.245 s | URL: https://httpbin.org/status/1
+Requisição 2/10: Status 200 | Tempo de resposta: 0.198 s | URL: https://httpbin.org/status/2
+...
+```
 
 Ao final do teste, será exibido um resumo contendo:
 - URL testada
 - Número de threads utilizadas
 - Keep-alive ativado ou não
 - Versão IP utilizada
+- Data/hora de início e fim
 - Tempo total do teste (hh:mm:ss)
 - Tempo médio de resposta (em segundos)
 - Tabela com a contagem de cada código de status HTTP recebido
+
+## Características
+
+- **Progresso em tempo real**: Mostra o resultado de cada requisição assim que é concluída
+- **Suporte a múltiplas threads**: Permite executar requisições simultâneas
+- **Keep-alive**: Opção para reaproveitar conexões HTTP
+- **Forçar IPv4/IPv6**: Controle sobre a versão do IP utilizada
+- **URLs dinâmicas**: Suporte à tag `<count>` para URLs únicas por requisição
+- **Intervalo configurável**: Possibilidade de adicionar delay entre requisições
 
 ---
 
