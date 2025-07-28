@@ -47,6 +47,10 @@ def fazer_requisicao(url, session=None):
     except Exception:
         return 'erro', None
 
+# Função auxiliar para substituir <count> na URL
+def substituir_count_na_url(url, count):
+    return url.replace('<count>', str(count))
+
 
 def main():
     parser = argparse.ArgumentParser(description='Conta códigos de status HTTP de múltiplas requisições.')
@@ -94,13 +98,15 @@ def main():
         def thread_worker(idx, n_reqs):
             session = thread_sessions[idx % n_threads]
             for j in range(n_reqs):
-                status, tempo = fazer_requisicao(url, session=session)
+                req_count = sum(reqs_por_thread[:idx]) + j + 1  # Número global da requisição
+                url_req = substituir_count_na_url(url, req_count)
+                status, tempo = fazer_requisicao(url_req, session=session)
                 status_counter[status] += 1
                 if tempo is not None:
                     tempos_resposta.append(tempo)
-                    print(f'Thread {idx+1}: Requisição {j+1}: Status {status} | Tempo de resposta: {tempo:.3f} s')
+                    print(f'Thread {idx+1}: Requisição {j+1}: Status {status} | Tempo de resposta: {tempo:.3f} s | URL: {url_req}')
                 else:
-                    print(f'Thread {idx+1}: Requisição {j+1}: Status {status} | Tempo de resposta: erro')
+                    print(f'Thread {idx+1}: Requisição {j+1}: Status {status} | Tempo de resposta: erro | URL: {url_req}')
                 if intervalo > 0 and j < n_reqs - 1:
                     time.sleep(intervalo)
         with ThreadPoolExecutor(max_workers=n_threads) as executor:
@@ -111,29 +117,32 @@ def main():
             session.close()
     else:
         def worker(idx):
+            req_count = idx + 1
+            url_req = substituir_count_na_url(url, req_count)
             if ipver != 'auto':
                 session = requests.Session()
                 session.mount('http://', IPAdapter(ipver=ipver_num))
                 session.mount('https://', IPAdapter(ipver=ipver_num))
-                result = fazer_requisicao(url, session=session)
+                result = fazer_requisicao(url_req, session=session)
                 session.close()
             else:
-                result = fazer_requisicao(url)
-            return result
-        with ThreadPoolExecutor(max_workers=n_threads) as executor:
-            futures = []
-            for i in range(total):
-                if intervalo > 0 and i > 0:
-                    time.sleep(intervalo)
-                futures.append(executor.submit(worker, i))
-            for i, future in enumerate(as_completed(futures)):
-                status, tempo = future.result()
+                result = fazer_requisicao(url_req)
+            return result, url_req, req_count
+        
+        # Processa uma requisição por vez para mostrar progresso em tempo real
+        for i in range(total):
+            if intervalo > 0 and i > 0:
+                time.sleep(intervalo)
+            
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(worker, i)
+                (status, tempo), url_req, req_count = future.result()
                 status_counter[status] += 1
                 if tempo is not None:
                     tempos_resposta.append(tempo)
-                    print(f'Requisição {i+1}/{total}: Status {status} | Tempo de resposta: {tempo:.3f} s')
+                    print(f'Requisição {req_count}/{total}: Status {status} | Tempo de resposta: {tempo:.3f} s | URL: {url_req}')
                 else:
-                    print(f'Requisição {i+1}/{total}: Status {status} | Tempo de resposta: erro')
+                    print(f'Requisição {req_count}/{total}: Status {status} | Tempo de resposta: erro | URL: {url_req}')
 
     fim = time.time()
     data_hora_fim = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')

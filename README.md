@@ -1,60 +1,75 @@
-# http_status_counter.py
+# Test-HTTP
 
-Script para realizar múltiplas requisições HTTP a uma URL, contabilizando os códigos de status recebidos, tempos de resposta e exibindo um resumo detalhado ao final.
+Script em Python para realizar múltiplas requisições HTTP a uma URL, contabilizar os códigos de status recebidos e exibir um resumo dos resultados em formato de tabela.
 
-## Funcionalidades
-- Suporte a múltiplas threads, com divisão automática das requisições entre elas.
-- Suporte a keep-alive (reaproveitamento de conexões HTTP via `requests.Session`).
-- Suporte a IPv4, IPv6 ou escolha automática.
-- Exibição do tempo de resposta de cada requisição.
-- Exibição da data/hora de início e fim do teste no resumo.
-- Resumo tabulado dos códigos de status HTTP recebidos.
+## Objetivo
+
+Este projeto permite testar endpoints HTTP realizando várias requisições simultâneas, contabilizando os retornos HTTP (status code) e exibindo um resumo ao final, incluindo tempo total do teste, URL testada, número de threads utilizadas, tempo médio de resposta e outras informações úteis.
+
+## Instalação
+
+1. Clone este repositório ou baixe os arquivos.
+2. Instale as dependências necessárias:
+
+```bash
+pip install -r requirements.txt
+```
 
 ## Uso
 
+Execute o script passando a URL, a quantidade de requisições e, opcionalmente, o intervalo entre as requisições, o número de threads, o reaproveitamento de conexões e a versão do IP:
+
 ```bash
-python http_status_counter.py URL QUANTIDADE [opções]
+python http_status_counter.py <URL> <QUANTIDADE> [--intervalo SEGUNDOS] [-t THREADS] [--keep-alive] [--ipver 4|6|auto]
 ```
 
-### Parâmetros obrigatórios
-- `URL` — Endereço a ser acessado.
-- `QUANTIDADE` — Número total de requisições a serem realizadas.
+### Parâmetros
 
-### Opções
-- `-i`, `--intervalo` `<segundos>` — Tempo (em segundos) entre as requisições de cada thread (padrão: 0).
-- `-t`, `--threads` `<n>` — Número de threads simultâneas (padrão: 1). As requisições são divididas igualmente entre as threads.
-- `--keep-alive` — Ativa o reaproveitamento de conexões HTTP (cada thread mantém sua própria sessão).
-- `--ipver` `<4|6|auto>` — Força o uso de IPv4, IPv6 ou deixa automático (padrão: auto).
+- `<URL>`: Endereço HTTP/HTTPS a ser testado (obrigatório)
+- `<QUANTIDADE>`: Número total de requisições a serem realizadas (obrigatório)
+- `-i`: Intervalo (em segundos) entre as requisições (opcional, padrão: 0)
+- `-t`, `--threads`: Número de threads simultâneas (opcional, padrão: 1)
+- `--keep-alive`: Reaproveita conexões HTTP usando keep-alive (opcional)
+- `--ipver`: Versão do IP a ser utilizada: `4` (IPv4), `6` (IPv6) ou `auto` (padrão, deixa o sistema escolher)
 
 ### Exemplos
 
-Requisições simples:
+Requisições sequenciais:
 ```bash
-python http_status_counter.py "https://exemplo.com" 10
+python http_status_counter.py https://httpbin.org/status/200 10
 ```
 
-Com 5 threads, keep-alive e intervalo de 1 segundo entre requisições de cada thread:
+Requisições simultâneas com 5 threads e keep-alive:
 ```bash
-python http_status_counter.py "https://exemplo.com" 20 -t 5 --keep-alive -i 1
+python http_status_counter.py https://httpbin.org/status/200 50 -t 5 --keep-alive
 ```
 
-Forçando IPv6:
+Requisições forçando IPv6:
 ```bash
-python http_status_counter.py "https://exemplo.com" 10 --ipver 6
+python http_status_counter.py https://httpbin.org/status/200 10 --ipver 6
 ```
 
-## Resumo exibido ao final
+Requisições com intervalo de 2 segundos entre cada:
+```bash
+python http_status_counter.py https://httpbin.org/status/200 10 -i 2
+```
+
+## Saída
+
+Durante a execução, para cada requisição, será exibido:
+- Número da requisição
+- Código de status HTTP
+- Tempo de resposta (em segundos)
+
+Ao final do teste, será exibido um resumo contendo:
 - URL testada
-- Threads utilizadas
-- Keep-alive ativado
-- Versão IP
-- **Data/hora início**
-- **Data/hora fim**
-- Tempo total do teste
-- Tempo médio de resposta
-- Tabela de códigos de status HTTP recebidos
+- Número de threads utilizadas
+- Keep-alive ativado ou não
+- Versão IP utilizada
+- Tempo total do teste (hh:mm:ss)
+- Tempo médio de resposta (em segundos)
+- Tabela com a contagem de cada código de status HTTP recebido
 
-## Observações
-- O tempo de resposta exibido é o tempo real de ida e volta da requisição, não incluindo o tempo de espera do intervalo.
-- O parâmetro `--keep-alive` faz com que cada thread mantenha uma sessão HTTP, reaproveitando conexões para maior eficiência.
-- As requisições são divididas igualmente entre as threads. Se o total não for divisível, as primeiras threads recebem uma requisição extra. 
+---
+
+Sinta-se à vontade para contribuir ou sugerir melhorias! 
